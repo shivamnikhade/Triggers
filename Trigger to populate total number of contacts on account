@@ -1,0 +1,24 @@
+Trigger to populate total number of contacts on account(Assume we have created custom field Total_Contacts__c with field type as number)
+
+trigger UpdateAccountTotalContacts on Contact (after insert, after update, after delete) {
+    Set<Id> accountIds = new Set<Id>();
+    
+    if (Trigger.isDelete) {
+        for (Contact deletedContact : Trigger.old) {
+            accountIds.add(deletedContact.AccountId);
+        }
+    } else {
+        for (Contact newOrUpdatedContact : Trigger.new) {
+            accountIds.add(newOrUpdatedContact.AccountId);
+        }
+    }
+    
+    List<Account> accountsToUpdate = new List<Account>();
+    for (Id accountId : accountIds) {
+        Integer totalContacts = [SELECT COUNT() FROM Contact WHERE AccountId = :accountId];
+        Account accToUpdate = new Account(Id = accountId, Total_Contacts__c = totalContacts);
+        accountsToUpdate.add(accToUpdate);
+    }
+    update accountsToUpdate;
+}
+
